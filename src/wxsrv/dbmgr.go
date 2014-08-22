@@ -10,7 +10,7 @@ import (
 
 type ExecResult sql.Result
 type QueryResult struct {
-	Rows *sql.Rows
+	*sql.Rows
 }
 
 type SqlQuery struct {
@@ -46,7 +46,7 @@ func (db *DBMgr) CreateDatabase(name string) error {
 }
 
 func (db *DBMgr) UseDB(name string) error {
-	cmdString := fmt.Sprintf("use database %s", name)
+	cmdString := fmt.Sprintf("use %s", name)
 	_, err := db.SqlDB.Exec(cmdString)
 	return err
 }
@@ -78,15 +78,29 @@ func (db *DBMgr) Query() (*QueryResult, error) {
 	return &QueryResult{r}, err
 }
 
+func (db *DBMgr) RawQuery(qs string) (*QueryResult, error) {
+	r, err := db.SqlDB.Query(qs)	
+	return &QueryResult{r}, err
+}
+
 func (db *DBMgr) Insert() (ExecResult, error) {
 	vs := strings.Join(db.QueryInfo.vals, ",")
 	cs := strings.Join(db.QueryInfo.colNames, ",")
-	qs := fmt.Sprintf("insert into %s (%s) values (%s)", db.QueryInfo.tableName, cs, vs)
+	qs := fmt.Sprintf(`insert into %s (%s) values (%s)`, db.QueryInfo.tableName, cs, vs)
+
+	log.Printf("insert sql string: %s\n", qs)
+
 	return db.SqlDB.Exec(qs)
 }
 
 func (db *DBMgr) Call(name string, params ...string) (*QueryResult, error) {
-	qs := fmt.Sprintf("call %s(%s)", name, params)
+	var qs string
+	if len(params) > 0 {
+		qs = fmt.Sprintf("call %s(%s)", name, params)
+	} else {
+		qs = fmt.Sprintf("call %s()", name)	
+	}
+
 	r, err := db.SqlDB.Query(qs)
 	return &QueryResult{r}, err
 }

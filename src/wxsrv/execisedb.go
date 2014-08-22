@@ -25,13 +25,6 @@ type ExeciseDB struct {
 //return nil when failed to create execise db instance.
 //has to set ConnString first. Or it will return nil
 func CreateExeciseDB() *ExeciseDB {
-	/*
-	cs := "root:hughroot@/weixin_hugh"
-	if useTestDB {
-		cs = "root:hugh1984lou@/weixin_hugh"	
-	}
-	*/
-
 	if len(ConnString) <= 0 {
 		log.Println("empyt connection string")
 		return nil
@@ -39,7 +32,7 @@ func CreateExeciseDB() *ExeciseDB {
 
 	dbmgr := CreateDBMgr(ConnString)
 	ed := &ExeciseDB{dbMgr:dbmgr}
-	ed.dbMgr.UseDB("execise_records")
+	ed.dbMgr.UseDB("weixin_hugh")
 	return ed
 }
 
@@ -50,7 +43,7 @@ func (ed *ExeciseDB) Close() {
 func (ed *ExeciseDB) Insert(rec *ExeciseRecord) (ExecResult, error) {
 	cols := []string{"user","execisetime","execiseenergy"}
 	vals := []string{
-		fmt.Sprintf("%s",rec.UserName),
+		fmt.Sprintf(`"%s"`,rec.UserName),
 		fmt.Sprintf("%d",rec.ExeciseTime),
 		fmt.Sprintf("%d",rec.ExeciseEnergy),
 	}
