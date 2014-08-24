@@ -1,14 +1,14 @@
 package wxsrv
 
-import(
-	"errors"
-	"strings"
-	"fmt"
-	"time"
-	"flag"
-	"net/http"
+import (
 	"encoding/xml"
+	"errors"
+	"flag"
+	"fmt"
 	"log"
+	"net/http"
+	"strings"
+	"time"
 )
 
 var (
@@ -20,26 +20,27 @@ type MsgHandler interface {
 }
 
 type BaseMsg struct {
-	ToUserName string `xml:"ToUserName"`
+	ToUserName   string `xml:"ToUserName"`
 	FromUserName string `xml:"FromUserName"`
-	CreateTime string `xml:"CreateTime"`
-	MsgType string `xml:"MsgType"`
+	CreateTime   string `xml:"CreateTime"`
+	MsgType      string `xml:"MsgType"`
 }
 
 type UserMsg struct {
 	BaseMsg
 	Content string `xml:"Content"`
-	MsgId string `xml:"MsgId"`
+	MsgId   string `xml:"MsgId"`
 }
 
 type ResponseMsg struct {
+	XMLName xml.Name `xml:"xml"`
 	BaseMsg
 	Content string `xml:"Content"`
 }
 
 type UserMsgHandler struct {
 	Msg *UserMsg
-	W http.ResponseWriter
+	W   http.ResponseWriter
 }
 
 func (m *UserMsgHandler) Handle() error {
@@ -87,9 +88,9 @@ func (m *UserMsgHandler) HandleTextMsg() error {
 }
 
 type ReportMsgHandler struct {
-	w http.ResponseWriter
+	w     http.ResponseWriter
 	since string
-	m *UserMsg
+	m     *UserMsg
 }
 
 func (rmh *ReportMsgHandler) Handle() error {
@@ -110,26 +111,37 @@ func (rmh *ReportMsgHandler) Handle() error {
 		return errors.New("unrecognized since string")
 	}
 
+	/*
+	var rs string
+	switch err {
+	case EMPTY_RESULT_SET: //empty result set. no records in db.
+		rs = "no report generated"
+	case nil: //no error. successfully returned the results.
+		rs = fmt.Sprintf("total time: %d, total energy: %d", rd.TotalTime, rd.TotalEnergy)
+	default: //some errors happened. return it to the caller.
+		return err
+	}
+	*/
+
 	if err != nil {
 		return err
 	}
 
-	//generate Content of ResponseMsg
 	var rs string
 	if rd == nil {
 		rs = "no report generated"
 	} else {
-		rs = fmt.Sprintf("total time: %d, total energy: %d", rd.TotalTime, rd.TotalEnergy)
+		rs = fmt.Sprintf("total time: %d, total energy: %d", rd.TotalTime, rd.TotalEnergy) 
 	}
 
-	bm := BaseMsg {
-		ToUserName: fmt.Sprintf("%s", rmh.m.FromUserName),
+	bm := BaseMsg{
+		ToUserName:   fmt.Sprintf("%s", rmh.m.FromUserName),
 		FromUserName: fmt.Sprintf("%s", rmh.m.ToUserName),
-		CreateTime: fmt.Sprintf("%d", time.Now().Unix()),
-		MsgType: "text",
+		CreateTime:   fmt.Sprintf("%d", time.Now().Unix()),
+		MsgType:      "text",
 	}
 
-	rm := ResponseMsg {
+	rm := ResponseMsg{
 		BaseMsg: bm,
 		Content: rs,
 	}
@@ -157,8 +169,8 @@ func (h *TYDLMsgHandler) Handle() error {
 	}
 
 	r := &ExeciseRecord{
-		UserName: h.m.BaseMsg.FromUserName,
-		ExeciseTime: h.t,
+		UserName:      h.m.BaseMsg.FromUserName,
+		ExeciseTime:   h.t,
 		ExeciseEnergy: h.e,
 	}
 

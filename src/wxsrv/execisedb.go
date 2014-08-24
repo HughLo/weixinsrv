@@ -1,20 +1,20 @@
 package wxsrv
 
 import (
-	"log"
 	"fmt"
+	"log"
 )
 
 var ConnString string
 
 type ExeciseRecord struct {
-	UserName string
-	ExeciseTime int //the merit is minute
+	UserName      string
+	ExeciseTime   int //the merit is minute
 	ExeciseEnergy int // the merit is kcal
 }
 
 type ReportData struct {
-	TotalTime int
+	TotalTime   int
 	TotalEnergy int
 }
 
@@ -31,7 +31,7 @@ func CreateExeciseDB() *ExeciseDB {
 	}
 
 	dbmgr := CreateDBMgr(ConnString)
-	ed := &ExeciseDB{dbMgr:dbmgr}
+	ed := &ExeciseDB{dbMgr: dbmgr}
 	ed.dbMgr.UseDB("weixin_hugh")
 	return ed
 }
@@ -41,15 +41,16 @@ func (ed *ExeciseDB) Close() {
 }
 
 func (ed *ExeciseDB) Insert(rec *ExeciseRecord) (ExecResult, error) {
-	cols := []string{"user","execisetime","execiseenergy"}
+	cols := []string{"user", "execisetime", "execiseenergy"}
 	vals := []string{
-		fmt.Sprintf(`"%s"`,rec.UserName),
-		fmt.Sprintf("%d",rec.ExeciseTime),
-		fmt.Sprintf("%d",rec.ExeciseEnergy),
+		fmt.Sprintf(`"%s"`, rec.UserName),
+		fmt.Sprintf("%d", rec.ExeciseTime),
+		fmt.Sprintf("%d", rec.ExeciseEnergy),
 	}
 	return ed.dbMgr.Cols(cols).Table("execise_records").Values(vals).Insert()
 }
 
+/*
 func (ed *ExeciseDB) ReportAll() (*ReportData, error) {
 	r, err := ed.dbMgr.Call("report_all")
 	if err != nil {
@@ -57,15 +58,39 @@ func (ed *ExeciseDB) ReportAll() (*ReportData, error) {
 	}
 
 	defer r.Rows.Close()
-	for r.Rows.Next() {
-		var tt, te int
-		err = r.Rows.Scan(tt, te)
-		if err != nil {
-			return nil, err
-		}
 
-		return &ReportData{TotalEnergy:te, TotalTime:tt}, nil
+	if !r.Rows.Next() {
+		return nil, nil
 	}
 
-	return nil, nil
+	var tt, te int
+	err = r.Rows.Scan(tt, te)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ReportData{TotalEnergy: te, TotalTime: tt}, nil
+}
+*/
+
+func (ed *ExeciseDB) ReportAll() (*ReportData, error) {
+	r, err := ed.dbMgr.RawQuery(`select sum(er.execisetime) as all_execise_time, 
+		sum(er.execiseenergy) as all_execise_energy from execise_records as er;`)
+	if err != nil {
+		return nil, err
+	}
+
+	defer r.Rows.Close()
+
+	if !r.Rows.Next() {
+		return nil, nil
+	}	
+
+	var rd ReportData
+	err = r.Rows.Scan(&(rd.TotalTime), &(rd.TotalEnergy))
+	if err != nil {
+		return nil, err
+	}
+
+	return &rd, nil
 }

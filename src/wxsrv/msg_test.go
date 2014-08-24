@@ -1,13 +1,13 @@
 package wxsrv
 
 import (
-	"testing"
-	"net/http"
 	"log"
-	"errors"
+	"net/http"
+	"testing"
 )
 
-type ResponseWriterMock struct {}
+type ResponseWriterMock struct{}
+
 func (rwm *ResponseWriterMock) Header() http.Header {
 	log.Println("calling the Header() function")
 	return nil
@@ -25,44 +25,44 @@ func (rwm ResponseWriterMock) WriteHeader(statusCode int) {
 func TestHandleMsg(t *testing.T) {
 	ConnString = "root:hugh1984lou@/weixin_hugh"
 
-	bm := BaseMsg {
-		ToUserName: "toUser", 
+	bm := BaseMsg{
+		ToUserName:   "toUser",
 		FromUserName: "fromUser",
-		CreateTime: "1234556",
-		MsgType: "text",
+		CreateTime:   "1234556",
+		MsgType:      "text",
 	}
 
- 	m := &UserMsg{BaseMsg: bm, 
- 		Content:"TYDL -t 30 -e 250", 
- 		MsgId:"1234567890123456",
- 	}
+	m := &UserMsg{BaseMsg: bm,
+		Content: "TYDL -t 30 -e 250",
+		MsgId:   "1234567890123456",
+	}
 
- 	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
- 	err := mh.Handle()
- 	if err != nil {
- 		t.Log(err)
- 	}
+	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
+	err := mh.Handle()
+	if err != nil {
+		t.Log(err)
+	}
 }
 
 func TestReportAll(t *testing.T) {
 	ConnString = "root:hugh1984lou@/weixin_hugh"
-	bm := BaseMsg {
-		ToUserName: "toUser", 
+	bm := BaseMsg{
+		ToUserName:   "toUser",
 		FromUserName: "fromUser",
-		CreateTime: "1234556",
-		MsgType: "text",
+		CreateTime:   "1234556",
+		MsgType:      "text",
 	}
 
- 	m := &UserMsg{BaseMsg: bm, 
- 		Content:"Report -since all", 
- 		MsgId:"1234567890123456",
- 	}
+	m := &UserMsg{BaseMsg: bm,
+		Content: "Report -since all",
+		MsgId:   "1234567890123456",
+	}
 
- 	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
- 	err := mh.Handle()
- 	if err != nil {
- 		t.Log(err)
- 	}
+	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
+	err := mh.Handle()
+	if err != nil {
+		t.Log(err)
+	}
 }
 
 func TestRawQuery(t *testing.T) {
@@ -85,11 +85,16 @@ func TestRawQuery(t *testing.T) {
 
 	r, err := db.RawQuery(`select sum(er.execisetime) as all_execise_time, sum(er.execiseenergy) as all_execise_energy from execise_records as er;`)
 	errHandler(err, t)
-	
+
 	defer r.Rows.Close()
-	r.Rows.Next()
+
+	if !r.Rows.Next() {
+		log.Println("empty result set")
+		return
+	}
+
 	var rd ReportData
-	err = r.Rows.Scan(&(rd.TotalTime), &(rd.TotalEnergy))	
+	err = r.Rows.Scan(&(rd.TotalTime), &(rd.TotalEnergy))
 	errHandler(err, t)
 
 	log.Println(rd)
