@@ -1,10 +1,10 @@
 package wxsrv
 
 import (
-	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-	"log"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"log"
 	"strings"
 )
 
@@ -15,13 +15,13 @@ type QueryResult struct {
 
 type SqlQuery struct {
 	tableName string
-	colNames []string
+	colNames  []string
 	whereCond string
-	vals []string
+	vals      []string
 }
 
 type DBMgr struct {
-	SqlDB *sql.DB
+	SqlDB     *sql.DB
 	QueryInfo SqlQuery
 }
 
@@ -32,7 +32,7 @@ func CreateDBMgr(cs string) *DBMgr {
 		return nil
 	}
 
-	return &DBMgr{SqlDB:db}
+	return &DBMgr{SqlDB: db}
 }
 
 func (db *DBMgr) Close() {
@@ -79,7 +79,7 @@ func (db *DBMgr) Query() (*QueryResult, error) {
 }
 
 func (db *DBMgr) RawQuery(qs string) (*QueryResult, error) {
-	r, err := db.SqlDB.Query(qs)	
+	r, err := db.SqlDB.Query(qs)
 	return &QueryResult{r}, err
 }
 
@@ -98,7 +98,7 @@ func (db *DBMgr) Call(name string, params ...string) (*QueryResult, error) {
 	if len(params) > 0 {
 		qs = fmt.Sprintf("call %s(%s)", name, params)
 	} else {
-		qs = fmt.Sprintf("call %s()", name)	
+		qs = fmt.Sprintf("call %s()", name)
 	}
 
 	r, err := db.SqlDB.Query(qs)
