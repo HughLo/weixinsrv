@@ -104,24 +104,12 @@ func (rmh *ReportMsgHandler) Handle() error {
 
 	switch rmh.since {
 	case "thisweek":
-		//@TODO
+		rd, err = db.ReportThisWeek()
 	case "all":
 		rd, err = db.ReportAll()
 	default:
 		return errors.New("unrecognized since string")
 	}
-
-	/*
-	var rs string
-	switch err {
-	case EMPTY_RESULT_SET: //empty result set. no records in db.
-		rs = "no report generated"
-	case nil: //no error. successfully returned the results.
-		rs = fmt.Sprintf("total time: %d, total energy: %d", rd.TotalTime, rd.TotalEnergy)
-	default: //some errors happened. return it to the caller.
-		return err
-	}
-	*/
 
 	if err != nil {
 		return err

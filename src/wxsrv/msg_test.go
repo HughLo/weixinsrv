@@ -65,6 +65,27 @@ func TestReportAll(t *testing.T) {
 	}
 }
 
+func TestReportThisWeek(t *testing.T) {
+	ConnString = "root:hugh1984lou@/weixin_hugh"
+	bm := BaseMsg{
+		ToUserName:   "toUser",
+		FromUserName: "fromUser",
+		CreateTime:   "1234556",
+		MsgType:      "text",
+	}
+
+	m := &UserMsg{BaseMsg: bm,
+		Content: "Report -since thisweek",
+		MsgId:   "1234567890123456",
+	}
+
+	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
+	err := mh.Handle()
+	if err != nil {
+		t.Log(err)
+	}
+}
+
 func TestRawQuery(t *testing.T) {
 	db := CreateDBMgr("root:hugh1984lou@/weixin_hugh")
 	if db == nil {

@@ -74,8 +74,21 @@ func (ed *ExeciseDB) ReportAll() (*ReportData, error) {
 */
 
 func (ed *ExeciseDB) ReportAll() (*ReportData, error) {
-	r, err := ed.dbMgr.RawQuery(`select sum(er.execisetime) as all_execise_time, 
-		sum(er.execiseenergy) as all_execise_energy from execise_records as er;`)
+	qs := `select sum(er.execisetime) as all_execise_time, 
+		sum(er.execiseenergy) as all_execise_energy from execise_records as er;`
+
+	return ed.reportInternal(qs)
+}
+
+func (ed *ExeciseDB) ReportThisWeek() (*ReportData, error) {
+	qs := `select sum(er.execisetime) as all_execise_time, sum(er.execiseenergy) as 
+		all_execise_energy from execise_records as er where week(er.record_time)=week(current_time());`
+
+	return ed.reportInternal(qs)
+}
+
+func (ed *ExeciseDB) reportInternal(qs string) (*ReportData, error) {
+	r, err := ed.dbMgr.RawQuery(qs)
 	if err != nil {
 		return nil, err
 	}
