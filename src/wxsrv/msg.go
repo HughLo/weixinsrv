@@ -56,8 +56,8 @@ func (m *UserMsgHandler) Handle() error {
 
 func (m *UserMsgHandler) HandleTextMsg() error {
 	args := strings.Split(m.Msg.Content, " ")
-	switch args[0] {
-	case "TYDL":
+	switch strings.ToLower(args[0]) {
+	case "tydl":
 		fs := flag.NewFlagSet("TYDL", flag.ContinueOnError)
 		t := fs.Int("t", 0, "execise time. the merit is minute.")
 		e := fs.Int("e", 0, "execise enegry. the merit is kcal.")
@@ -70,16 +70,17 @@ func (m *UserMsgHandler) HandleTextMsg() error {
 		h := &TYDLMsgHandler{m.Msg, *t, *e}
 		return h.Handle()
 
-	case "Report":
-		fs := flag.NewFlagSet("Report", flag.ContinueOnError)
+	case "report":
+		fs := flag.NewFlagSet("report", flag.ContinueOnError)
 		since := fs.String("since", "thisweek", "specify the time scope for report")
+		all := fs.Bool("all", false, "report from the very begining")
 		err := fs.Parse(args[1:])
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 
-		h := &ReportMsgHandler{m.W, *since, m.Msg}
+		h := &ReportMsgHandler{m.W, *since, *all, m.Msg}
 		return h.Handle()
 	default:
 	}
@@ -90,6 +91,7 @@ func (m *UserMsgHandler) HandleTextMsg() error {
 type ReportMsgHandler struct {
 	w     http.ResponseWriter
 	since string
+	all   bool
 	m     *UserMsg
 }
 
@@ -102,13 +104,15 @@ func (rmh *ReportMsgHandler) Handle() error {
 	}
 	defer db.Close()
 
-	switch rmh.since {
-	case "thisweek":
-		rd, err = db.ReportThisWeek()
-	case "all":
+	if rmh.all {
 		rd, err = db.ReportAll()
-	default:
-		return errors.New("unrecognized since string")
+	} else {
+		switch rmh.since {
+		case "thisweek":
+			rd, err = db.ReportThisWeek()
+		default:
+			return errors.New("unrecognized since string")
+		}
 	}
 
 	if err != nil {
@@ -119,7 +123,7 @@ func (rmh *ReportMsgHandler) Handle() error {
 	if rd == nil {
 		rs = "no report generated"
 	} else {
-		rs = fmt.Sprintf("total time: %d, total energy: %d", rd.TotalTime, rd.TotalEnergy) 
+		rs = fmt.Sprintf("total time: %d, total energy: %d", rd.TotalTime, rd.TotalEnergy)
 	}
 
 	bm := BaseMsg{
