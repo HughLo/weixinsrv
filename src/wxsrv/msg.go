@@ -9,11 +9,36 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"os"
+	"io"
 )
 
 var (
 	NOT_HANDLED_MSG_TYPE = errors.New("the msg type is not handled")
 )
+
+func SendResponseMsg(m *UserMsg, d []byte, w http.ResponseWriter) error {
+	bm := BaseMsg{
+		ToUserName:   fmt.Sprintf("%s", m.FromUserName),
+		FromUserName: fmt.Sprintf("%s", m.ToUserName),
+		CreateTime:   fmt.Sprintf("%d", time.Now().Unix()),
+		MsgType:      "text",
+	}
+
+	rm := ResponseMsg{
+		BaseMsg: bm,
+		Content: string(d),
+	}
+
+	response, err := xml.Marshal(&rm)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(response)
+
+	return err
+}
 
 type MsgHandler interface {
 	Handle(http.ResponseWriter) error
@@ -57,6 +82,10 @@ func (m *UserMsgHandler) Handle() error {
 func (m *UserMsgHandler) HandleTextMsg() error {
 	args := strings.Split(m.Msg.Content, " ")
 	switch strings.ToLower(args[0]) {
+	case "help":
+		h := &HelpMsgHandler{m.W, m.Msg}
+		return h.Handle()
+
 	case "tydl":
 		fs := flag.NewFlagSet("TYDL", flag.ContinueOnError)
 		t := fs.Int("t", 0, "execise time. the merit is minute.")
@@ -83,6 +112,33 @@ func (m *UserMsgHandler) HandleTextMsg() error {
 		h := &ReportMsgHandler{m.W, *since, *all, m.Msg}
 		return h.Handle()
 	default:
+		return errors.New("not recognized commands")
+	}
+
+	return nil
+}
+
+type HelpMsgHandler struct {
+	w http.ResponseWriter
+	m *UserMsg
+}
+
+func (h *HelpMsgHandler) Handle() error {
+	f, err := os.Open("help.txt")
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	buf := make([]byte, 2048)
+	var readCnt int = 0
+	for err != io.EOF {
+		readCnt, err = f.Read(buf)
+		sndErr := SendResponseMsg(h.m, buf[:readCnt], h.w)
+		if sndErr != nil {
+			return sndErr
+		}
 	}
 
 	return nil
@@ -126,26 +182,7 @@ func (rmh *ReportMsgHandler) Handle() error {
 		rs = fmt.Sprintf("total time: %d, total energy: %d", rd.TotalTime, rd.TotalEnergy)
 	}
 
-	bm := BaseMsg{
-		ToUserName:   fmt.Sprintf("%s", rmh.m.FromUserName),
-		FromUserName: fmt.Sprintf("%s", rmh.m.ToUserName),
-		CreateTime:   fmt.Sprintf("%d", time.Now().Unix()),
-		MsgType:      "text",
-	}
-
-	rm := ResponseMsg{
-		BaseMsg: bm,
-		Content: rs,
-	}
-
-	response, err := xml.Marshal(&rm)
-	if err != nil {
-		return err
-	}
-
-	_, err = rmh.w.Write(response)
-
-	return err
+	return SendResponseMsg(rmh.m, []byte(rs), rmh.w)
 }
 
 type TYDLMsgHandler struct {
