@@ -11,6 +11,7 @@ import (
 	"time"
 	"os"
 	"io"
+	"path/filepath"
 )
 
 var (
@@ -124,7 +125,12 @@ type HelpMsgHandler struct {
 }
 
 func (h *HelpMsgHandler) Handle() error {
-	f, err := os.Open("help.txt")
+	//@TODO: shall develop a file cache mechanism so that the file can be read
+	//from the disk at the first using. The subsequent call will get the data
+	//from the memory.
+
+	gp := os.Getenv("GOPATH")
+	f, err := os.Open(filepath.Join(gp, "bin/help.txt"))
 	if err != nil {
 		return err
 	}
@@ -133,11 +139,17 @@ func (h *HelpMsgHandler) Handle() error {
 
 	buf := make([]byte, 2048)
 	var readCnt int = 0
-	for err != io.EOF {
+	for {
 		readCnt, err = f.Read(buf)
-		sndErr := SendResponseMsg(h.m, buf[:readCnt], h.w)
-		if sndErr != nil {
-			return sndErr
+		if err != io.EOF && readCnt > 0 {
+			sndErr := SendResponseMsg(h.m, buf[:readCnt], h.w)
+			if sndErr != nil {
+				return sndErr
+			}
+		}
+
+		if err == io.EOF && readCnt <= 0 {
+			break
 		}
 	}
 

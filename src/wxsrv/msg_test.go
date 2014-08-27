@@ -44,6 +44,26 @@ func TestHandleMsg(t *testing.T) {
 	}
 }
 
+func TestHandleHelpMsg(t *testing.T) {
+	bm := BaseMsg{
+		ToUserName:   "toUser",
+		FromUserName: "fromUser",
+		CreateTime:   "1234556",
+		MsgType:      "text",
+	}
+
+	m := &UserMsg{BaseMsg: bm,
+		Content: "help",
+		MsgId:   "1234567890123456",
+	}
+
+	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
+	err := mh.Handle()
+	if err != nil {
+		t.Log(err)
+	}
+}
+
 func TestReportAll(t *testing.T) {
 	ConnString = "root:hugh1984lou@/weixin_hugh"
 	bm := BaseMsg{
@@ -54,7 +74,7 @@ func TestReportAll(t *testing.T) {
 	}
 
 	m := &UserMsg{BaseMsg: bm,
-		Content: "Report -since all",
+		Content: "Report -all",
 		MsgId:   "1234567890123456",
 	}
 
