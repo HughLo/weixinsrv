@@ -1,2 +1,9 @@
-tydl [-t time] [-e energy]
-report [-since]|[-all]
+<p>Users can use this public account to either record their exercise data or obtain a summary report.</p>
+
+
+
+<h3 id="how-to-record-the-data">how to record the data</h3>
+
+<blockquote>
+  <p>Written with <a href="https://stackedit.io/">StackEdit</a>.</p>
+</blockquote>
