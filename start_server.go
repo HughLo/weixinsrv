@@ -2,6 +2,9 @@ package main
 
 import (
 	"os/exec"
+	"path/filepath"
+	"log"
+	"os"
 )
 
 func main() {
@@ -22,7 +25,7 @@ func main() {
 	}
 
 	//2. run server program
-	cmd := os.Command("sudo", "-E", "./bin/main")
+	cmd := exec.Command("sudo", "-E", "./bin/main")
 	err = cmd.Run()
 	if err != nil {
 		log.Println(err)
