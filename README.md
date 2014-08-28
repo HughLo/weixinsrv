@@ -10,3 +10,9 @@ Currently this project uses github.com/go-sql-driver/mysql to interact with mysq
 git submodule init
 git submodule update
 ```
+how to build and run
+--------------------
+```go run build.go```
+is used to build and install main package. The building result will be installed into the ./bin path.
+```go run start_server.go```
+is used to launch the server.
