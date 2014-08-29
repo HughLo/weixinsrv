@@ -7,6 +7,17 @@ import (
 	"time"
 )
 
+func WithTestDB(t *testing.T, fn func(*ExeciseDB)) {
+	ConnString := "root:hugh1984lou@/weixin_hugh"
+	db := CreateExeciseDB()
+	if db == nil {
+		t.Logf("failed to create execise db with conn string: %s", ConnString)
+		t.FailNow()
+	}
+	defer db.Close()
+	fn(db)
+}
+
 type ResponseWriterMock struct{}
 
 func (rwm *ResponseWriterMock) Header() http.Header {
@@ -108,23 +119,43 @@ func TestHandleReportThisWeekMsg(t *testing.T) {
 }
 
 func TestReportSinceWeek(t *testing.T) {
-	ConnString := "root:hugh1984lou@/weixin_hugh" 
-	db := CreateExeciseDB()
-	if db == nil {
-		t.Logf("failed to create execise db with conn string: %s", ConnString)
-		return
-	}
+	WithTestDB(t, func(db *ExeciseDB) {
+		year, wk := time.Now().ISOWeek()
+		t.Logf("current week: %d\n", wk)
+		//test since last week
+		rd, err := db.ReportSinceWeek(year, wk-1)
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
 
-	_, wk := time.Now().ISOWeek()
-	t.Logf("current week: %d\n", wk)
-	//test since last week
-	rd, err := db.ReportSinceWeek(wk-1)
-	if err != nil {
-		t.Log(err)
-		t.FailNow()
-	}
+		t.Logf("report since last week: t(%d), e(%d)", rd.TotalTime, rd.TotalEnergy)
+	})
+}
 
-	t.Logf("report since last week: t(%d), e(%d)", rd.TotalTime, rd.TotalEnergy)
+func TestReportSinceLastWeek(t *testing.T) {
+	WithTestDB(t, func(db *ExeciseDB) {
+		rd, err := db.ReportSinceLastWeek()
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+
+		t.Logf("report since last week: t(%d), e(%d)", rd.TotalTime, rd.TotalEnergy)
+	})
+}
+
+func TestReportSinceMonth(t *testing.T) {
+	WithTestDB(t, func(db *ExeciseDB) {
+		now := time.Now()
+		rd, err := db.ReportSinceMonth(now.Year(), int(now.Month()))
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+
+		t.Logf("report since this month: t(%d), e(%d)", rd.TotalTime, rd.TotalEnergy)
+	})
 }
 
 func TestRawQuery(t *testing.T) {

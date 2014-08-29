@@ -177,7 +177,7 @@ func (rmh *ReportMsgHandler) Handle() error {
 	} else {
 		switch rmh.since {
 		case "thisweek":
-			rd, err = db.ReportThisWeek()
+			rd, err = db.ReportSinceThisWeek()
 		default:
 			return errors.New("unrecognized since string")
 		}
