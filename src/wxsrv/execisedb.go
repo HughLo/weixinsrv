@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+//Must set the ConnString before you start to use ExeciseDB
+//CreateExeciseDB will use the ConnString to connect to the
+//database
 var ConnString string
 
 type ExeciseRecord struct {
@@ -41,6 +44,7 @@ func (ed *ExeciseDB) Close() {
 	ed.dbMgr.Close()
 }
 
+//insert a ExciseRecord instance into database
 func (ed *ExeciseDB) Insert(rec *ExeciseRecord) (ExecResult, error) {
 	cols := []string{"user", "execisetime", "execiseenergy"}
 	vals := []string{
@@ -50,29 +54,6 @@ func (ed *ExeciseDB) Insert(rec *ExeciseRecord) (ExecResult, error) {
 	}
 	return ed.dbMgr.Cols(cols).Table("execise_records").Values(vals).Insert()
 }
-
-/*
-func (ed *ExeciseDB) ReportAll() (*ReportData, error) {
-	r, err := ed.dbMgr.Call("report_all")
-	if err != nil {
-		return nil, err
-	}
-
-	defer r.Rows.Close()
-
-	if !r.Rows.Next() {
-		return nil, nil
-	}
-
-	var tt, te int
-	err = r.Rows.Scan(tt, te)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ReportData{TotalEnergy: te, TotalTime: tt}, nil
-}
-*/
 
 func (ed *ExeciseDB) ReportAll() (*ReportData, error) {
 	qs := `select sum(er.execisetime) as all_execise_time,
@@ -91,6 +72,28 @@ func (ed *ExeciseDB) ReportSinceLastWeek() (*ReportData, error) {
 	return ed.ReportSinceWeek(t.ISOWeek())
 }
 
+func (ed *ExeciseDB) ReportSinceWeek(year, wk int) (*ReportData, error) {
+	//mysql supports 7 modes of week representation. please refer to
+	//http://dev.mysql.com/doc/refman/5.5/en/date-and-time-functions.html#function_week
+	//to get the details about the 7 modes. The mode 3 represenatation
+	//is what used by GOLANG.
+	qs := `select sum(er.execisetime) as all_execise_time, sum(er.execiseenergy) as
+		all_execise_energy from execise_records as er where yearweek(er.record_time, 3)>=%d;`
+	qs = fmt.Sprintf(qs, year*100+wk)
+
+	return ed.reportInternal(qs)
+}
+
+func (ed *ExeciseDB) ReportSinceThisMonth() (*ReportData, error) {
+	now := time.Now()
+	return ed.ReportSinceMonth(now.Year(), int(now.Month()))
+}
+
+func (ed *ExeciseDB) ReportSinceLastMonth() (*ReportData, error) {
+	prev := time.Now().AddDate(0, -1, 0)
+	return ed.ReportSinceMonth(prev.Year(), int(prev.Month()))
+}
+
 func (ed *ExeciseDB) ReportSinceMonth(year, mon int) (*ReportData, error) {
 	qs := `select sum(er.execisetime) as all_execise_time, sum(er.execiseenergy) as
 		all_execise_energy from execise_records as er where year(er.record_time)*100+
@@ -100,14 +103,19 @@ func (ed *ExeciseDB) ReportSinceMonth(year, mon int) (*ReportData, error) {
 	return ed.reportInternal(qs)
 }
 
-func (ed *ExeciseDB) ReportSinceWeek(year, wk int) (*ReportData, error) {
-	//mysql supports 7 modes of week representation. please refer to
-	//http://dev.mysql.com/doc/refman/5.5/en/date-and-time-functions.html#function_week
-	//to get the details about the 7 modes. The mode 3 represenatation
-	//is what used by GOLANG.
+func (ed *ExeciseDB) ReportSinceThisYear() (*ReportData, error) {
+	return ed.ReportSinceYear(time.Now().Year())
+}
+
+func (ed *ExeciseDB) ReportSinceLastYear() (*ReportData, error) {
+	return ed.ReportSinceYear(time.Now().Year()-1)
+}
+
+func (ed *ExeciseDB) ReportSinceYear(year int) (*ReportData, error) {
+
 	qs := `select sum(er.execisetime) as all_execise_time, sum(er.execiseenergy) as
-		all_execise_energy from execise_records as er where yearweek(er.record_time, 3)>=%d;`
-	qs = fmt.Sprintf(qs, year*100+wk)
+		all_execise_energy from execise_records as er where year(er.record_time)>=%d;`
+	qs = fmt.Sprintf(qs, year)
 
 	return ed.reportInternal(qs)
 }

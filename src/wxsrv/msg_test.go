@@ -158,6 +158,30 @@ func TestReportSinceMonth(t *testing.T) {
 	})
 }
 
+func TestReportSinceThisYear(t *testing.T) {
+	WithTestDB(t, func(db *ExeciseDB) {
+		rd, err := db.ReportSinceThisYear()
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+
+		t.Logf("report since this year: t(%d), e(%d)", rd.TotalTime, rd.TotalEnergy)
+	})
+}
+
+func TestReportSinceLastYear(t *testing.T) {
+	WithTestDB(t, func(db *ExeciseDB) {
+		rd, err := db.ReportSinceLastYear()
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+
+		t.Logf("report since last year: t(%d), e(%d)", rd.TotalTime, rd.TotalEnergy)
+	})
+}
+
 func TestRawQuery(t *testing.T) {
 	db := CreateDBMgr("root:hugh1984lou@/weixin_hugh")
 	if db == nil {
