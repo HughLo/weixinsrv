@@ -5,13 +5,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
-	"os"
-	"io"
-	"path/filepath"
 )
 
 var (
@@ -178,6 +178,12 @@ func (rmh *ReportMsgHandler) Handle() error {
 		switch rmh.since {
 		case "thisweek":
 			rd, err = db.ReportSinceThisWeek()
+		case "lastweek":
+			rd, err = db.ReportSinceLastWeek()
+		case "thisyear":
+			rd, err = db.ReportSinceThisYear()
+		case "lastyear":
+			rd, err = db.ReportSinceLastYear()
 		default:
 			return errors.New("unrecognized since string")
 		}
