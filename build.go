@@ -61,4 +61,6 @@ func main() {
 		log.Println(err)
 		return
 	}
+
+	log.Println("build success")
 }

@@ -156,6 +156,26 @@ func (h *HelpMsgHandler) Handle() error {
 	return nil
 }
 
+type reportHandler func(*ExeciseDB, string) (*ReportData, error)
+var staticReportHandler reportHandler = func() reportHandler {
+	type regElement func(*ExeciseDB)(*ReportData, error)
+	regsrv := map[string] regElement {
+		"thisweek": (*ExeciseDB).ReportSinceThisWeek,
+		"lastweek": (*ExeciseDB).ReportSinceLastWeek,
+		"thisyear": (*ExeciseDB).ReportSinceThisYear,
+		"lastyear": (*ExeciseDB).ReportSinceLastYear,
+	}
+
+	return func(db *ExeciseDB, idx string) (*ReportData, error) {
+		handler, ok := regsrv[idx]
+		if !ok {
+			return nil, errors.New("unrecognized since string")
+		}
+
+		return handler(db)
+	}
+}()
+
 type ReportMsgHandler struct {
 	w     http.ResponseWriter
 	since string
@@ -175,6 +195,7 @@ func (rmh *ReportMsgHandler) Handle() error {
 	if rmh.all {
 		rd, err = db.ReportAll()
 	} else {
+		/*
 		switch rmh.since {
 		case "thisweek":
 			rd, err = db.ReportSinceThisWeek()
@@ -187,6 +208,8 @@ func (rmh *ReportMsgHandler) Handle() error {
 		default:
 			return errors.New("unrecognized since string")
 		}
+		*/
+		rd, err = staticReportHandler(db, rmh.since)
 	}
 
 	if err != nil {

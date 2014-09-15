@@ -34,7 +34,7 @@ func (rwm ResponseWriterMock) WriteHeader(statusCode int) {
 	log.Printf("calling WriteHeader(%d) function", statusCode)
 }
 
-func TestHandleMsg(t *testing.T) {
+func WithHandleMsg(t *testing.T, msgc string) {
 	ConnString = "root:hugh1984lou@/weixin_hugh"
 
 	bm := BaseMsg{
@@ -45,7 +45,7 @@ func TestHandleMsg(t *testing.T) {
 	}
 
 	m := &UserMsg{BaseMsg: bm,
-		Content: "TYDL -t 30 -e 250",
+		Content: msgc,
 		MsgId:   "1234567890123456",
 	}
 
@@ -54,68 +54,22 @@ func TestHandleMsg(t *testing.T) {
 	if err != nil {
 		t.Log(err)
 	}
+}
+
+func TestHandleMsg(t *testing.T) {
+	WithHandleMsg(t, "TYDL -t 30 -e 250")
 }
 
 func TestHandleHelpMsg(t *testing.T) {
-	bm := BaseMsg{
-		ToUserName:   "toUser",
-		FromUserName: "fromUser",
-		CreateTime:   "1234556",
-		MsgType:      "text",
-	}
-
-	m := &UserMsg{BaseMsg: bm,
-		Content: "help",
-		MsgId:   "1234567890123456",
-	}
-
-	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
-	err := mh.Handle()
-	if err != nil {
-		t.Log(err)
-	}
+	WithHandleMsg(t, "help")
 }
 
 func TestHandleReportAllMsg(t *testing.T) {
-	ConnString = "root:hugh1984lou@/weixin_hugh"
-	bm := BaseMsg{
-		ToUserName:   "toUser",
-		FromUserName: "fromUser",
-		CreateTime:   "1234556",
-		MsgType:      "text",
-	}
-
-	m := &UserMsg{BaseMsg: bm,
-		Content: "Report -all",
-		MsgId:   "1234567890123456",
-	}
-
-	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
-	err := mh.Handle()
-	if err != nil {
-		t.Log(err)
-	}
+	WithHandleMsg(t, "Report -all")
 }
 
 func TestHandleReportThisWeekMsg(t *testing.T) {
-	ConnString = "root:hugh1984lou@/weixin_hugh"
-	bm := BaseMsg{
-		ToUserName:   "toUser",
-		FromUserName: "fromUser",
-		CreateTime:   "1234556",
-		MsgType:      "text",
-	}
-
-	m := &UserMsg{BaseMsg: bm,
-		Content: "Report -since thisweek",
-		MsgId:   "1234567890123456",
-	}
-
-	mh := &UserMsgHandler{m, &ResponseWriterMock{}}
-	err := mh.Handle()
-	if err != nil {
-		t.Log(err)
-	}
+	WithHandleMsg(t, "Report -since thisweek")
 }
 
 func TestReportSinceWeek(t *testing.T) {
